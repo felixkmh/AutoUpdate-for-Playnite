@@ -81,26 +81,26 @@ namespace AutoUpdate
             // Add code to be executed when Playnite is initialized.
             PlayniteApi.Notifications.Messages.CollectionChanged += Messages_CollectionChanged;
 
-            if (Settings.ShowSummaryBuild || Settings.ShowSummaryMinor || Settings.ShowSummaryMajor)
+            Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
             {
-                if (Settings.LastChanglogs.Count > 0)
+                if (Settings.ShowSummaryBuild || Settings.ShowSummaryMinor || Settings.ShowSummaryMajor)
                 {
-                    Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                    if (Settings.LastChanglogs.Count > 0)
                     {
-                        var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions { ShowCloseButton = true, ShowMaximizeButton = true });
-                        window.Content = new SummaryView { DataContext = new SummaryViewModel { LastChanglogs = Settings.LastChanglogs } };
-                        window.Owner = Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.Name == "WindowMain");
-                        window.Width = 600;
-                        window.Height = 400;
-                        window.Title = ResourceProvider.GetString("LOC_AU_UpdateSummaryTitle");
-                        window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-                        window.PreviewKeyDown += (s, e) => { if (e.Key == Key.Escape) window.Close(); };
-                        window.Show();
-                        Settings.LastChanglogs.Clear();
-                        SavePluginSettings(Settings);
-                    }), DispatcherPriority.ApplicationIdle);
+                            var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions { ShowCloseButton = true, ShowMaximizeButton = true });
+                            window.Content = new SummaryView { DataContext = new SummaryViewModel { LastChanglogs = Settings.LastChanglogs } };
+                            window.Owner = Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.Name == "WindowMain");
+                            window.Width = 600;
+                            window.Height = 400;
+                            window.Title = ResourceProvider.GetString("LOC_AU_UpdateSummaryTitle");
+                            window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                            window.PreviewKeyDown += (s, e) => { if (e.Key == Key.Escape) window.Close(); };
+                            window.Show();
+                    }
                 }
-            }
+                Settings.LastChanglogs.Clear();
+                SavePluginSettings(Settings);
+            }), DispatcherPriority.ApplicationIdle);
         }
 
         private void Messages_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
