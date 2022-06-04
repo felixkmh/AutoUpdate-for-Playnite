@@ -1,0 +1,8 @@
+﻿<?xml version="1.0"?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+	<sys:String x:Key="LOC_AU_SuppressNotification">Suppress update notification</sys:String>
+    <sys:String x:Key="LOC_AU_AutoUpdate">Automatically download updates and queue installation for next restart</sys:String>
+	<sys:String x:Key="LOC_AU_Major">Major</sys:String>
+	<sys:String x:Key="LOC_AU_Minor">Minor</sys:String>
+	<sys:String x:Key="LOC_AU_Build">Build</sys:String>
+</ResourceDictionary>
