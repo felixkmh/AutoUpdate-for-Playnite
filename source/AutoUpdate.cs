@@ -150,7 +150,7 @@ namespace AutoUpdate
             {
                 var queuedUpdates = new List<UpdateInfo>();
                 updates.Clear();
-                bool suppressNotification = false;
+                bool showNotification = false;
 
                 if (!Directory.Exists(AddonsRepoPath))
                 {
@@ -174,12 +174,17 @@ namespace AutoUpdate
                         .Select(Path.GetFileName);
 
                     var addonDir = Path.Combine(AddonsRepoPath, "addons");
-                    var manifestFiles = System.IO.Directory.GetFiles(Path.Combine(addonDir, "generic"), "*.yaml")
-                        .Concat(System.IO.Directory.GetFiles(Path.Combine(addonDir, "library"), "*.yaml"))
-                        .Concat(System.IO.Directory.GetFiles(Path.Combine(addonDir, "metadata"), "*.yaml"))
-                        .Where(p => PlayniteApi.Addons.Addons.Contains(Path.GetFileNameWithoutExtension(p)))
-                        .Concat(System.IO.Directory.GetFiles(Path.Combine(addonDir, "themes_desktop"), "*.yaml").Where(p => desktopThemeIds.Contains(Path.GetFileNameWithoutExtension(p))))
-                        .Concat(System.IO.Directory.GetFiles(Path.Combine(addonDir, "themes_fullscreen"), "*.yaml").Where(p => fullscreeThemeIds.Contains(Path.GetFileNameWithoutExtension(p))));
+                    var generic = System.IO.Directory.GetFiles(Path.Combine(addonDir, "generic"), "*.yaml").AsEnumerable();
+
+                    var library = System.IO.Directory.GetFiles(Path.Combine(addonDir, "library"), "*.yaml").AsEnumerable();
+
+                    var metadata = System.IO.Directory.GetFiles(Path.Combine(addonDir, "metadata"), "*.yaml").AsEnumerable();
+
+                    var manifestFiles = generic
+                        .Concat(library)
+                        .Concat(metadata)
+                        .Concat(System.IO.Directory.GetFiles(Path.Combine(addonDir, "themes_desktop"), "*.yaml"))
+                        .Concat(System.IO.Directory.GetFiles(Path.Combine(addonDir, "themes_fullscreen"), "*.yaml"));
 
                     var addonManifests = manifestFiles.AsParallel().Select(file =>
                     {
@@ -191,7 +196,9 @@ namespace AutoUpdate
                             var manifest = d.Deserialize<AddonManifest>(yaml);
                             return manifest;
                         }
-                    }).OfType<AddonManifest>().ToList();
+                    }).OfType<AddonManifest>()
+                    .Where(m => PlayniteApi.Addons.Addons.Contains(m.AddonId) || desktopThemeIds.Contains(m.AddonId) || fullscreeThemeIds.Contains(m.AddonId))
+                    .ToList();
 
                     var fileNameRegex = new Regex(@"(?<=filename=).*(?=\s?)");
 
@@ -252,9 +259,13 @@ namespace AutoUpdate
                             update |= versionField == AutoUpdateSettings.VersionField.Minor && Settings.AutoUpdateMinor;
                             update |= versionField == AutoUpdateSettings.VersionField.Major && Settings.AutoUpdateMajor;
 
+                            var suppressNotification = false;
+
                             suppressNotification |= versionField == AutoUpdateSettings.VersionField.Build && Settings.SuppressNotificationBuild;
                             suppressNotification |= versionField == AutoUpdateSettings.VersionField.Minor && Settings.SuppressNotificationMinor;
                             suppressNotification |= versionField == AutoUpdateSettings.VersionField.Major && Settings.SuppressNotificationMajor;
+
+                            showNotification |= !suppressNotification;
                         }
 
                         if (update)
@@ -263,7 +274,7 @@ namespace AutoUpdate
                         }
                     }
 
-                    if (!suppressNotification)
+                    if (showNotification)
                     {
                         var notification = new NotificationMessage(
                             "AutoUpdateAvailable",
