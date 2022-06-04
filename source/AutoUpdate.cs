@@ -85,7 +85,7 @@ namespace AutoUpdate
             {
                 if (Settings.ShowSummaryBuild || Settings.ShowSummaryMinor || Settings.ShowSummaryMajor)
                 {
-                    if (Settings.LastChanglogs.Count > 0)
+                    if (Settings.LastChanglogs.Count > 0 && PlayniteApi.ApplicationInfo.Mode == ApplicationMode.Desktop)
                     {
                             var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions { ShowCloseButton = true, ShowMaximizeButton = true });
                             window.Content = new SummaryView { DataContext = new SummaryViewModel { LastChanglogs = Settings.LastChanglogs } };
