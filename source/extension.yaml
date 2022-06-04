@@ -1,0 +1,7 @@
+﻿Id: felixkmh_AutoUpdate_Plugin
+Name: AutoUpdate
+Author: felixkmh
+Version: 1.0
+Module: AutoUpdate.dll
+Type: GenericPlugin
+Icon: icon.png

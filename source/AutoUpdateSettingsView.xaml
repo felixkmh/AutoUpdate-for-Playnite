@@ -1,0 +1,21 @@
+﻿<UserControl x:Class="AutoUpdate.AutoUpdateSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:au="clr-namespace:AutoUpdate"
+             mc:Ignorable="d"
+             d:DesignHeight="400" d:DesignWidth="600"
+             d:DataContext="{d:DesignInstance IsDesignTimeCreatable=False, Type=au:AutoUpdateSettingsViewModel}">
+    <StackPanel Margin="12">
+        
+        <CheckBox IsChecked="{Binding Settings.SuppressNotificationMajor}" Content="Suppress Major" Margin="3"/>
+        <CheckBox IsChecked="{Binding Settings.SuppressNotificationMinor}" Content="Suppress Minor" Margin="3"/>
+        <CheckBox IsChecked="{Binding Settings.SuppressNotificationBuild}" Content="Suppress Build" Margin="3"/>
+
+        <CheckBox IsChecked="{Binding Settings.AutoUpdateMajor}" Content="Auto Update Major" Margin="3"/>
+        <CheckBox IsChecked="{Binding Settings.AutoUpdateMinor}" Content="Auto Update Minor" Margin="3"/>
+        <CheckBox IsChecked="{Binding Settings.AutoUpdateBuild}" Content="Auto Update Build" Margin="3"/>
+
+    </StackPanel>
+</UserControl>
