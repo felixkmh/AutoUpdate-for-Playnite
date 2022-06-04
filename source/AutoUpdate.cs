@@ -79,25 +79,32 @@ namespace AutoUpdate
         private void Messages_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             PlayniteApi.Notifications.Messages.CollectionChanged -= Messages_CollectionChanged;
-            if (e.Action == NotifyCollectionChangedAction.Add)
+            if (Settings.SuppressNotificationMajor ||
+                Settings.SuppressNotificationMinor ||
+                Settings.SuppressNotificationBuild ||
+                Settings.AutoUpdateMajor ||
+                Settings.AutoUpdateMinor ||
+                Settings.AutoUpdateBuild)
             {
-                var toRemove = e.NewItems.OfType<NotificationMessage>().FirstOrDefault(m => m.Id == "AddonUpdateAvailable");
-                if (toRemove is NotificationMessage message)
+                if (e.Action == NotifyCollectionChangedAction.Add)
                 {
-                    Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                    var toRemove = e.NewItems.OfType<NotificationMessage>().FirstOrDefault(m => m.Id == "AddonUpdateAvailable");
+                    if (toRemove is NotificationMessage message)
                     {
-                        PlayniteApi.Notifications.Messages.Remove(message);
-                    }));
-                    if (Settings.SuppressNotificationMajor && 
-                        Settings.SuppressNotificationMinor && 
-                        Settings.SuppressNotificationBuild &&
-                        !Settings.AutoUpdateMajor &&
-                        !Settings.AutoUpdateMinor &&
-                        !Settings.AutoUpdateBuild)
-                    {
-                        return;
+                        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                        {
+                            PlayniteApi.Notifications.Messages.Remove(message);
+                        }));
+                        if (!Settings.SuppressNotificationMajor ||
+                            !Settings.SuppressNotificationMinor ||
+                            !Settings.SuppressNotificationBuild ||
+                            Settings.AutoUpdateMajor ||
+                            Settings.AutoUpdateMinor ||
+                            Settings.AutoUpdateBuild)
+                        {
+                            QueueUpdateInstallation(message);
+                        }
                     }
-                    QueueUpdateInstallation(message);
                 }
             }
             PlayniteApi.Notifications.Messages.CollectionChanged += Messages_CollectionChanged;
@@ -303,6 +310,7 @@ namespace AutoUpdate
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
         {
             // Add code to be executed when Playnite is shutting down.
+            PlayniteApi.Notifications.Messages.CollectionChanged -= Messages_CollectionChanged;
         }
 
         public override void OnLibraryUpdated(OnLibraryUpdatedEventArgs args)

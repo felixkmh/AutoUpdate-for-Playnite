@@ -9,7 +9,10 @@
              d:DataContext="{d:DesignInstance IsDesignTimeCreatable=False, Type=au:AutoUpdateSettingsViewModel}">
     <StackPanel Margin="12">
 
-        <GroupBox Header="{DynamicResource LOC_AU_SuppressNotification}" HorizontalAlignment="Left">
+        <GroupBox HorizontalAlignment="Left">
+            <GroupBox.Header>
+                <TextBlock Text="{DynamicResource LOC_AU_SuppressNotification}" TextWrapping="Wrap"/>
+            </GroupBox.Header>
             <StackPanel>
                 <CheckBox IsChecked="{Binding Settings.SuppressNotificationMajor}" Content="{DynamicResource LOC_AU_Major}" Margin="3"
                           ToolTip="{DynamicResource LOC_AU_MajorTooltip}"/>
@@ -20,7 +23,10 @@
             </StackPanel>
         </GroupBox>
 
-        <GroupBox Header="{DynamicResource LOC_AU_AutoUpdate}" HorizontalAlignment="Left">
+        <GroupBox HorizontalAlignment="Left">
+            <GroupBox.Header>
+                <TextBlock Text="{DynamicResource LOC_AU_AutoUpdate}" TextWrapping="Wrap"/>
+            </GroupBox.Header>
             <StackPanel>
                 <CheckBox IsChecked="{Binding Settings.AutoUpdateMajor}" Content="{DynamicResource LOC_AU_Major}" Margin="3"
                           ToolTip="{DynamicResource LOC_AU_MajorTooltip}"/>
