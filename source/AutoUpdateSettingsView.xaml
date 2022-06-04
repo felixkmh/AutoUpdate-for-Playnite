@@ -8,14 +8,27 @@
              d:DesignHeight="400" d:DesignWidth="600"
              d:DataContext="{d:DesignInstance IsDesignTimeCreatable=False, Type=au:AutoUpdateSettingsViewModel}">
     <StackPanel Margin="12">
-        
-        <CheckBox IsChecked="{Binding Settings.SuppressNotificationMajor}" Content="Suppress Major" Margin="3"/>
-        <CheckBox IsChecked="{Binding Settings.SuppressNotificationMinor}" Content="Suppress Minor" Margin="3"/>
-        <CheckBox IsChecked="{Binding Settings.SuppressNotificationBuild}" Content="Suppress Build" Margin="3"/>
 
-        <CheckBox IsChecked="{Binding Settings.AutoUpdateMajor}" Content="Auto Update Major" Margin="3"/>
-        <CheckBox IsChecked="{Binding Settings.AutoUpdateMinor}" Content="Auto Update Minor" Margin="3"/>
-        <CheckBox IsChecked="{Binding Settings.AutoUpdateBuild}" Content="Auto Update Build" Margin="3"/>
+        <GroupBox Header="{DynamicResource LOC_AU_SuppressNotification}" HorizontalAlignment="Left">
+            <StackPanel>
+                <CheckBox IsChecked="{Binding Settings.SuppressNotificationMajor}" Content="{DynamicResource LOC_AU_Major}" Margin="3"
+                          ToolTip="{DynamicResource LOC_AU_MajorTooltip}"/>
+                <CheckBox IsChecked="{Binding Settings.SuppressNotificationMinor}" Content="{DynamicResource LOC_AU_Minor}" Margin="3"
+                          ToolTip="{DynamicResource LOC_AU_MinorTooltip}"/>
+                <CheckBox IsChecked="{Binding Settings.SuppressNotificationBuild}" Content="{DynamicResource LOC_AU_Build}" Margin="3"
+                          ToolTip="{DynamicResource LOC_AU_BuildTooltip}"/>
+            </StackPanel>
+        </GroupBox>
 
+        <GroupBox Header="{DynamicResource LOC_AU_AutoUpdate}" HorizontalAlignment="Left">
+            <StackPanel>
+                <CheckBox IsChecked="{Binding Settings.AutoUpdateMajor}" Content="{DynamicResource LOC_AU_Major}" Margin="3"
+                          ToolTip="{DynamicResource LOC_AU_MajorTooltip}"/>
+                <CheckBox IsChecked="{Binding Settings.AutoUpdateMinor}" Content="{DynamicResource LOC_AU_Minor}" Margin="3"
+                          ToolTip="{DynamicResource LOC_AU_MinorTooltip}"/>
+                <CheckBox IsChecked="{Binding Settings.AutoUpdateBuild}" Content="{DynamicResource LOC_AU_Build}" Margin="3"
+                          ToolTip="{DynamicResource LOC_AU_BuildTooltip}"/>
+            </StackPanel>
+        </GroupBox>
     </StackPanel>
 </UserControl>
