@@ -8,7 +8,7 @@ SourceUrl: https://github.com/felixkmh/AutoUpdate-for-Playnite
 Description: This extension can suppress the extension update notification and automatically download and schedule extensions updates. You can configure whether each of these actions occurs depending on the kind of version change of the update (major, minor, build). Installing updates automatically is not officially supported by the PlayniteAPI and as such this extension could break with every update to Playnite.
 Tags: ["autoupdate", "update", "notification", "extensions"]
 Links:
-    GitHub: https://github.com/felixkmh/AutoUpdate-for—Playnite
+    GitHub: https://github.com/felixkmh/AutoUpdate-for-Playnite
     Support: https://playnite.link/forum/thread-1242.html
 IconUrl: https://raw.githubusercontent.com/felixkmh/AutoUpdate-for—Playnite/master/source/icon.png
 
