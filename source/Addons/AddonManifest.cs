@@ -1,4 +1,6 @@
-﻿using Playnite.SDK.Data;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Playnite.SDK.Data;
 using Playnite.SDK.Models;
 using System;
 using System.Collections.Generic;
@@ -148,10 +150,34 @@ namespace AutoUpdate.Addons
         }
     }
 
+    public class VersionConverter : JsonConverter
+    { 
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            string s = (string)reader.Value;
+
+            return new Version(s);
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(Version) || objectType == typeof(string);
+        }
+    }
+
     public class AddonInstallerPackage
     {
+
+        [JsonConverter(typeof(VersionConverter))]
         public System.Version Version { get; set; }
         public string PackageUrl { get; set; }
+        [JsonConverter(typeof(VersionConverter))]
         public System.Version RequiredApiVersion { get; set; }
         public DateTime ReleaseDate { get; set; }
         public List<string> Changelog { get; set; }

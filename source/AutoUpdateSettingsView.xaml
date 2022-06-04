@@ -8,7 +8,6 @@
              d:DesignHeight="400" d:DesignWidth="600"
              d:DataContext="{d:DesignInstance IsDesignTimeCreatable=False, Type=au:AutoUpdateSettingsViewModel}">
     <StackPanel Margin="12">
-
         <GroupBox HorizontalAlignment="Left">
             <GroupBox.Header>
                 <TextBlock Text="{DynamicResource LOC_AU_SuppressNotification}" TextWrapping="Wrap"/>
@@ -33,6 +32,20 @@
                 <CheckBox IsChecked="{Binding Settings.AutoUpdateMinor}" Content="{DynamicResource LOC_AU_Minor}" Margin="3"
                           ToolTip="{DynamicResource LOC_AU_MinorTooltip}"/>
                 <CheckBox IsChecked="{Binding Settings.AutoUpdateBuild}" Content="{DynamicResource LOC_AU_Build}" Margin="3"
+                          ToolTip="{DynamicResource LOC_AU_BuildTooltip}"/>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox HorizontalAlignment="Left">
+            <GroupBox.Header>
+                <TextBlock Text="{DynamicResource LOC_AU_ShowSummary}" TextWrapping="Wrap"/>
+            </GroupBox.Header>
+            <StackPanel>
+                <CheckBox IsChecked="{Binding Settings.ShowSummaryMajor}" Content="{DynamicResource LOC_AU_Major}" Margin="3"
+                          ToolTip="{DynamicResource LOC_AU_MajorTooltip}"/>
+                <CheckBox IsChecked="{Binding Settings.ShowSummaryMinor}" Content="{DynamicResource LOC_AU_Minor}" Margin="3"
+                          ToolTip="{DynamicResource LOC_AU_MinorTooltip}"/>
+                <CheckBox IsChecked="{Binding Settings.ShowSummaryBuild}" Content="{DynamicResource LOC_AU_Build}" Margin="3"
                           ToolTip="{DynamicResource LOC_AU_BuildTooltip}"/>
             </StackPanel>
         </GroupBox>

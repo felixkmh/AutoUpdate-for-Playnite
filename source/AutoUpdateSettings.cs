@@ -1,4 +1,5 @@
-﻿using Playnite.SDK;
+﻿using AutoUpdate.Addons;
+using Playnite.SDK;
 using Playnite.SDK.Data;
 using System;
 using System.Collections.Generic;
@@ -36,6 +37,18 @@ namespace AutoUpdate
 
         private bool autoUpdateMajor = false;
         public bool AutoUpdateMajor { get => autoUpdateMajor; set => SetValue(ref autoUpdateMajor, value); }
+
+        private bool showSummaryBuild = false;
+        public bool ShowSummaryBuild { get => showSummaryBuild; set => SetValue(ref showSummaryBuild, value); }
+
+        private bool showSummaryMinor = false;
+        public bool ShowSummaryMinor { get => showSummaryMinor; set => SetValue(ref showSummaryMinor, value); }
+
+        private bool showSummaryMajor = false;
+        public bool ShowSummaryMajor { get => showSummaryMajor; set => SetValue(ref showSummaryMajor, value); }
+
+        private Dictionary<string, List<AddonInstallerPackage>> lastChanglogs = new Dictionary<string, List<AddonInstallerPackage>>();
+        public Dictionary<string, List<AddonInstallerPackage>> LastChanglogs { get => lastChanglogs; set => SetValue(ref lastChanglogs, value); }
     }
 
     public class AutoUpdateSettingsViewModel : ObservableObject, ISettings
