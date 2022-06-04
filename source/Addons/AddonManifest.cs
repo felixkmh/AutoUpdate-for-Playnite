@@ -1,4 +1,6 @@
-﻿using Playnite.SDK.Data;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Playnite.SDK.Data;
 using Playnite.SDK.Models;
 using System;
 using System.Collections.Generic;
@@ -38,8 +40,26 @@ namespace AutoUpdate.Addons
                     }
                     return sdkVersion;
                 case AddonType.ThemeDesktop:
+                    if (desktopVersion == null)
+                    {
+                        var desktopApi = AppDomain.CurrentDomain.GetAssemblies()
+                        .FirstOrDefault(a => a.GetName().Name == "Playnite")?.DefinedTypes
+                        ?.FirstOrDefault(t => t.Name == "ThemeManager")
+                        ?.GetProperty("DesktopApiVersion")
+                        ?.GetValue(null) as Version;
+                        desktopVersion = desktopApi;
+                    }
                     return desktopVersion;
                 case AddonType.ThemeFullscreen:
+                    if (fullscreenVersion == null)
+                    {
+                        var fullscreenApi = AppDomain.CurrentDomain.GetAssemblies()
+                        .FirstOrDefault(a => a.GetName().Name == "Playnite")?.DefinedTypes
+                        ?.FirstOrDefault(t => t.Name == "ThemeManager")
+                        ?.GetProperty("FullscreenApiVersion")
+                        ?.GetValue(null) as Version;
+                        fullscreenVersion = fullscreenApi;
+                    }
                     return fullscreenVersion;
             }
 
@@ -94,6 +114,7 @@ namespace AutoUpdate.Addons
                                     var manifest = deserializer.Deserialize<AddonInstallerManifest>(yaml);
                                     installerManifest = manifest;
                                     installerManifest.Packages = installerManifest.Packages.OrderByDescending(p => p.Version).ToList();
+                                    installerManifest.AddonType = Type;
                                 }
                             }
                         }
@@ -129,10 +150,34 @@ namespace AutoUpdate.Addons
         }
     }
 
+    public class VersionConverter : JsonConverter
+    { 
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            string s = (string)reader.Value;
+
+            return new Version(s);
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(Version) || objectType == typeof(string);
+        }
+    }
+
     public class AddonInstallerPackage
     {
+
+        [JsonConverter(typeof(VersionConverter))]
         public System.Version Version { get; set; }
         public string PackageUrl { get; set; }
+        [JsonConverter(typeof(VersionConverter))]
         public System.Version RequiredApiVersion { get; set; }
         public DateTime ReleaseDate { get; set; }
         public List<string> Changelog { get; set; }

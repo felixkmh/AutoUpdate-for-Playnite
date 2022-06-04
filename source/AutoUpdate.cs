@@ -17,6 +17,10 @@ using AutoUpdate.Addons;
 using System.Net.Http;
 using System.Net;
 using System.Text.RegularExpressions;
+using AutoUpdate.ViewModels;
+using AutoUpdate.Views;
+using System.Windows;
+using System.Windows.Input;
 
 namespace AutoUpdate
 {
@@ -27,6 +31,8 @@ namespace AutoUpdate
 
         private AutoUpdateSettingsViewModel settings { get; set; }
         private AutoUpdateSettings Settings => settings.Settings;
+
+        private List<ExtensionInstallQueueItem> updates = new List<ExtensionInstallQueueItem>();
 
         public override Guid Id { get; } = Guid.Parse("e998a914-7644-4d1b-b6ff-57e3d8c39a6b");
 
@@ -74,41 +80,76 @@ namespace AutoUpdate
         {
             // Add code to be executed when Playnite is initialized.
             PlayniteApi.Notifications.Messages.CollectionChanged += Messages_CollectionChanged;
+
+            Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+            {
+                if (Settings.ShowSummaryBuild || Settings.ShowSummaryMinor || Settings.ShowSummaryMajor)
+                {
+                    if (Settings.LastChanglogs.Count > 0)
+                    {
+                            var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions { ShowCloseButton = true, ShowMaximizeButton = true });
+                            window.Content = new SummaryView { DataContext = new SummaryViewModel { LastChanglogs = Settings.LastChanglogs } };
+                            window.Owner = Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.Name == "WindowMain");
+                            window.Width = 600;
+                            window.Height = 400;
+                            window.Title = ResourceProvider.GetString("LOC_AU_UpdateSummaryTitle");
+                            window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                            window.PreviewKeyDown += (s, e) => { if (e.Key == Key.Escape) window.Close(); };
+                            window.Show();
+                    }
+                }
+                Settings.LastChanglogs.Clear();
+                SavePluginSettings(Settings);
+            }), DispatcherPriority.ApplicationIdle);
         }
 
         private void Messages_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             PlayniteApi.Notifications.Messages.CollectionChanged -= Messages_CollectionChanged;
-            if (e.Action == NotifyCollectionChangedAction.Add)
+            if (Settings.SuppressNotificationMajor ||
+                Settings.SuppressNotificationMinor ||
+                Settings.SuppressNotificationBuild ||
+                Settings.AutoUpdateMajor ||
+                Settings.AutoUpdateMinor ||
+                Settings.AutoUpdateBuild)
             {
-                var toRemove = e.NewItems.OfType<NotificationMessage>().FirstOrDefault(m => m.Id == "AddonUpdateAvailable");
-                if (toRemove is NotificationMessage message)
+                if (e.Action == NotifyCollectionChangedAction.Add)
                 {
-                    Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                    var toRemove = e.NewItems.OfType<NotificationMessage>().FirstOrDefault(m => m.Id == "AddonUpdateAvailable");
+                    if (toRemove is NotificationMessage message)
                     {
-                        PlayniteApi.Notifications.Messages.Remove(message);
-                    }));
-                    if (Settings.SuppressNotificationMajor && 
-                        Settings.SuppressNotificationMinor && 
-                        Settings.SuppressNotificationBuild &&
-                        !Settings.AutoUpdateMajor &&
-                        !Settings.AutoUpdateMinor &&
-                        !Settings.AutoUpdateBuild)
-                    {
-                        return;
+                        Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
+                        {
+                            PlayniteApi.Notifications.Messages.Remove(message);
+                        }));
+                        if (!Settings.SuppressNotificationMajor ||
+                            !Settings.SuppressNotificationMinor ||
+                            !Settings.SuppressNotificationBuild ||
+                            Settings.AutoUpdateMajor ||
+                            Settings.AutoUpdateMinor ||
+                            Settings.AutoUpdateBuild)
+                        {
+                            QueueUpdateInstallation(message);
+                        }
                     }
-                    QueueUpdateInstallation(message);
                 }
             }
             PlayniteApi.Notifications.Messages.CollectionChanged += Messages_CollectionChanged;
+        }
+
+        private class UpdateInfo
+        {
+            public AddonManifest Manifest { get; set; }
+            public AddonInstallerPackage Package { get; set; }
+            public System.Version InstalledVersion { get; set; }
         }
 
         private void QueueUpdateInstallation(NotificationMessage updateNotification)
         {
             backgroundTask = backgroundTask.ContinueWith(t =>
             {
-                var queuedUpdates = new List<AddonInstallerPackage>();
-                var updates = new List<ExtensionInstallQueueItem>();
+                var queuedUpdates = new List<UpdateInfo>();
+                updates.Clear();
                 bool suppressNotification = false;
 
                 if (!Directory.Exists(AddonsRepoPath))
@@ -205,19 +246,7 @@ namespace AutoUpdate
 
                         if (installedVersion != null && latest?.Version != null && installedVersion < latest.Version)
                         {
-                            AutoUpdateSettings.VersionField versionField = AutoUpdateSettings.VersionField.None;
-                            if (latest.Version.Major == installedVersion.Major && latest.Version.Minor == installedVersion.Minor)
-                            {
-                                versionField = AutoUpdateSettings.VersionField.Build;
-                            }
-                            else if (latest.Version.Major == installedVersion.Major)
-                            {
-                                versionField = AutoUpdateSettings.VersionField.Minor;
-                            }
-                            else
-                            {
-                                versionField = AutoUpdateSettings.VersionField.Major;
-                            }
+                            AutoUpdateSettings.VersionField versionField = GetUpdateKind(installedVersion, latest.Version);
 
                             update |= versionField == AutoUpdateSettings.VersionField.Build && Settings.AutoUpdateBuild;
                             update |= versionField == AutoUpdateSettings.VersionField.Minor && Settings.AutoUpdateMinor;
@@ -230,7 +259,7 @@ namespace AutoUpdate
 
                         if (update)
                         {
-                            queuedUpdates.Add(latest);
+                            queuedUpdates.Add(new UpdateInfo { Package = latest, Manifest = manifest, InstalledVersion = installedVersion });
                         }
                     }
 
@@ -252,7 +281,7 @@ namespace AutoUpdate
                             try
                             {
                                 var tempPath = Path.Combine(Path.GetTempPath(), "Playnite");
-                                var data = client.DownloadData(latest.PackageUrl);
+                                var data = client.DownloadData(latest.Package.PackageUrl);
                                 var header = client.ResponseHeaders["Content-Disposition"];
                                 if (!string.IsNullOrEmpty(header))
                                 {
@@ -270,39 +299,89 @@ namespace AutoUpdate
                                             file.Write(data, 0, data.Length);
                                         }
                                         updates.Add(new ExtensionInstallQueueItem(filePath, ExtInstallType.Install));
+
+                                        bool addToSummary = false;
+
+                                        AutoUpdateSettings.VersionField versionField = GetUpdateKind(latest.InstalledVersion, latest.Package.Version);
+
+                                        addToSummary |= versionField == AutoUpdateSettings.VersionField.Build && Settings.ShowSummaryBuild;
+                                        addToSummary |= versionField == AutoUpdateSettings.VersionField.Minor && Settings.ShowSummaryMinor;
+                                        addToSummary |= versionField == AutoUpdateSettings.VersionField.Major && Settings.ShowSummaryMajor;
+
+                                        if (addToSummary)
+                                        {
+                                            Settings.LastChanglogs[latest.Manifest.Name] = latest.Manifest.InstallerManifest.Packages
+                                                .Where(p => p.Version > latest.InstalledVersion)
+                                                .Where(p => p.Version <= latest.Package.Version)
+                                                .OrderByDescending(p => p.Version)
+                                                .ToList();
+                                        } else
+                                        {
+                                            Settings.LastChanglogs.Remove(latest.Manifest.Name);
+                                        }
                                     }
                                 }
                             }
                             catch (Exception ex)
                             {
-                                logger.Error(ex, $"Failed to download {latest.PackageUrl}");
+                                logger.Error(ex, $"Failed to download {latest.Package.PackageUrl}");
                             }
                         }
                     }
-                }
-
-                try
-                {
-                    if (updates.Count > 0)
-                    {
-                        using (var file = File.CreateText(ExtensionQueueFilePath))
-                        {
-                            file.Write(Newtonsoft.Json.JsonConvert.SerializeObject(updates));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Error(ex, $"Failed to write update queue to {ExtensionQueueFilePath}");
                 }
                 GC.Collect();
                 t?.Dispose();
             });
         }
 
+        private static AutoUpdateSettings.VersionField GetUpdateKind(System.Version installedVersion, System.Version latest)
+        {
+            AutoUpdateSettings.VersionField versionField = AutoUpdateSettings.VersionField.None;
+            if (latest.Major == installedVersion.Major && latest.Minor == installedVersion.Minor)
+            {
+                versionField = AutoUpdateSettings.VersionField.Build;
+            }
+            else if (latest.Major == installedVersion.Major)
+            {
+                versionField = AutoUpdateSettings.VersionField.Minor;
+            }
+            else
+            {
+                versionField = AutoUpdateSettings.VersionField.Major;
+            }
+
+            return versionField;
+        }
+
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
         {
             // Add code to be executed when Playnite is shutting down.
+            PlayniteApi.Notifications.Messages.CollectionChanged -= Messages_CollectionChanged;
+
+            try
+            {
+                if (updates.Count > 0)
+                {
+                    if (File.Exists(ExtensionQueueFilePath))
+                    {
+                        var file = File.ReadAllText(ExtensionQueueFilePath);
+                        var queued = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ExtensionInstallQueueItem>>(file);
+                        foreach(var item in queued)
+                        {
+                            updates.Add(item);
+                        }
+                    }
+                    using (var file = File.CreateText(ExtensionQueueFilePath))
+                    {
+                        file.Write(Newtonsoft.Json.JsonConvert.SerializeObject(updates));
+                    }
+                    SavePluginSettings(Settings);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Failed to write update queue to {ExtensionQueueFilePath}");
+            }
         }
 
         public override void OnLibraryUpdated(OnLibraryUpdatedEventArgs args)
