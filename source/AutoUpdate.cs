@@ -366,9 +366,12 @@ namespace AutoUpdate
                     {
                         var file = File.ReadAllText(ExtensionQueueFilePath);
                         var queued = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ExtensionInstallQueueItem>>(file);
-                        foreach(var item in queued)
+                        if (queued != null)
                         {
-                            updates.Add(item);
+                            foreach(var item in queued)
+                            {
+                                updates.Add(item);
+                            }
                         }
                     }
                     using (var file = File.CreateText(ExtensionQueueFilePath))
