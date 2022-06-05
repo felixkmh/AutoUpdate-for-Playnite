@@ -120,8 +120,8 @@ namespace AutoUpdate
                     {
                         Dispatcher.CurrentDispatcher.BeginInvoke(new Action(() =>
                         {
-                            PlayniteApi.Notifications.Messages.Remove(message);
-                        }));
+                            PlayniteApi.Notifications.Remove(message.Id);
+                        }), DispatcherPriority.Background);
                         if (!Settings.SuppressNotificationMajor ||
                             !Settings.SuppressNotificationMinor ||
                             !Settings.SuppressNotificationBuild ||
@@ -200,11 +200,31 @@ namespace AutoUpdate
                     .Where(m => PlayniteApi.Addons.Addons.Contains(m.AddonId) || desktopThemeIds.Contains(m.AddonId) || fullscreeThemeIds.Contains(m.AddonId))
                     .ToList();
 
-                    var fileNameRegex = new Regex(@"(?<=filename=).*(?=\s?)");
-
                     IDeserializer deserializer = new DeserializerBuilder()
                                 .IgnoreUnmatchedProperties()
                                 .Build();
+
+                    try
+                    {
+                        using(var client = new WebClient())
+                        {
+                            var autoUpdateManifestString = client.DownloadString("https://raw.githubusercontent.com/felixkmh/AutoUpdate-for-Playnite/master/AddonManifest/felixkmh_AutoUpdate_Plugin.yaml");
+                            if (!string.IsNullOrEmpty(autoUpdateManifestString))
+                            {
+                                var autoUpdateManifest = deserializer.Deserialize<AddonManifest>(autoUpdateManifestString);
+                                if (autoUpdateManifest != null)
+                                {
+                                    addonManifests.Add(autoUpdateManifest);
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        logger.Error(e, "Couldn't retrieve addon manifest for AutoUpdate.");
+                    }
+
+                    var fileNameRegex = new Regex(@"(?<=filename=).*(?=\s?)");
 
 
                     foreach (var manifest in addonManifests)
