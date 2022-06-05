@@ -101,6 +101,13 @@ namespace AutoUpdate
                 Settings.LastChanglogs.Clear();
                 SavePluginSettings(Settings);
             }), DispatcherPriority.ApplicationIdle);
+
+            if (Settings.AutoUpdateMajor ||
+                Settings.AutoUpdateMinor ||
+                Settings.AutoUpdateBuild)
+            {
+                QueueUpdateInstallation(null);
+            }
         }
 
         private void Messages_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -294,7 +301,7 @@ namespace AutoUpdate
                         }
                     }
 
-                    if (showNotification)
+                    if (showNotification && updateNotification is NotificationMessage)
                     {
                         var notification = new NotificationMessage(
                             "AutoUpdateAvailable",
