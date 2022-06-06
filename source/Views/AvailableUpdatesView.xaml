@@ -45,7 +45,7 @@
                                                         <Run Text="{Binding Name}" FontWeight="SemiBold"/>
                                                         <Run Text=": "/>
                                                         <Run Text="{Binding CurrentVersion}" Foreground="LightSalmon"/>
-                                                        <Run Text=" -> "/>
+                                                        <Run Text="  " FontFamily="{DynamicResource FontIcoFont}"/>
                                                         <Run Text="{Binding NewVersion}" Foreground="LightGreen"/>
                                                     </TextBlock>
                                                 </ControlTemplate>
