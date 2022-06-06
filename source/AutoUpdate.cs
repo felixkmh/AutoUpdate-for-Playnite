@@ -169,11 +169,12 @@ namespace AutoUpdate
             PlayniteApi.Notifications.Messages.CollectionChanged += Messages_CollectionChanged;
         }
 
-        private class UpdateInfo
+        public class UpdateInfo
         {
             public AddonManifest Manifest { get; set; }
             public AddonInstallerPackage Package { get; set; }
             public System.Version InstalledVersion { get; set; }
+            public string FilePath { get; set; } = null;
         }
 
         private void QueueUpdateInstallation(NotificationMessage updateNotification)
@@ -189,6 +190,7 @@ namespace AutoUpdate
                 }));
 
                 var queuedUpdates = new List<UpdateInfo>();
+                var prevUpdates = updates.ToList();
                 updates.Clear();
                 bool showNotification = false;
 
@@ -351,92 +353,114 @@ namespace AutoUpdate
                         {
                             try
                             {
-                                var tempPath = DownloadDirectory;
-                                var data = client.DownloadData(latest.Package.PackageUrl);
-                                var header = client.ResponseHeaders["Content-Disposition"];
-                                if (!string.IsNullOrEmpty(header))
+                                bool skipDownload = false;
+                                string filePath = null;
+                                if (prevUpdates.FirstOrDefault(u => u.Info.Manifest.AddonId == latest.Manifest.AddonId) is ExtensionInstallQueueItem info)
                                 {
-                                    var fileName = fileNameRegex.Match(header)?.Value;
-                                    if (fileName.StartsWith("\"") && fileName.EndsWith("\""))
+                                    if (info.Info != null && 
+                                        info.Info.FilePath != null && 
+                                        File.Exists(info.Info.FilePath) && 
+                                        info.Info.Package.Version == latest.Package.Version)
                                     {
-                                        fileName = fileName.Substring(1, fileName.Length - 2);
+                                        skipDownload = true;
+                                        filePath = info.Info.FilePath;
                                     }
-                                    if (!string.IsNullOrEmpty(fileName) && data.Length > 512 &&
-                                    (fileName.EndsWith(".pext", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".pthm", StringComparison.OrdinalIgnoreCase)))
+                                }
+                                if (!skipDownload)
+                                {
+                                    var tempPath = DownloadDirectory;
+                                    var data = client.DownloadData(latest.Package.PackageUrl);
+                                    var header = client.ResponseHeaders["Content-Disposition"];
+                                    if (!string.IsNullOrEmpty(header))
                                     {
-                                        string filePath = Path.Combine(tempPath, fileName);
-                                        using (var file = File.Create(filePath))
+                                        var fileName = fileNameRegex.Match(header)?.Value;
+                                        if (fileName.StartsWith("\"") && fileName.EndsWith("\""))
                                         {
-                                            file.Write(data, 0, data.Length);
+                                            fileName = fileName.Substring(1, fileName.Length - 2);
                                         }
-                                        updates.Add(new ExtensionInstallQueueItem(filePath, ExtInstallType.Install));
-
-                                        bool addToSummary = false;
-
-                                        AutoUpdateSettings.VersionField versionField = GetUpdateKind(latest.InstalledVersion, latest.Package.Version);
-
-                                        addToSummary |= versionField == AutoUpdateSettings.VersionField.Build && Settings.ShowSummaryBuild;
-                                        addToSummary |= versionField == AutoUpdateSettings.VersionField.Minor && Settings.ShowSummaryMinor;
-                                        addToSummary |= versionField == AutoUpdateSettings.VersionField.Major && Settings.ShowSummaryMajor;
-
-                                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                                        if (!string.IsNullOrEmpty(fileName) && data.Length > 512 &&
+                                            (fileName.EndsWith(".pext", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".pthm", StringComparison.OrdinalIgnoreCase)))
                                         {
-                                            if (availableUpdatesViewModel.IsValueCreated)
+                                            filePath = Path.Combine(tempPath, fileName);
+                                            using (var file = File.Create(filePath))
                                             {
-                                                var queued = availableUpdatesViewModel.Value.Updates;
-                                                var changelogs = latest.Manifest.InstallerManifest.Packages
-                                                        .Where(p => p.Version > latest.InstalledVersion)
-                                                        .Where(p => p.Version <= latest.Package.Version)
-                                                        .OrderByDescending(p => p.Version);
-                                                queued.Add(new Models.UpdateSummary
-                                                {
-                                                    Name = latest.Manifest.Name,
-                                                    CurrentVersion = latest.InstalledVersion.ToString(),
-                                                    NewVersion = latest.Package.Version.ToString(),
-                                                    NewPackages = changelogs.ToObservable(),
-                                                    ShowChangelogCommand = new RelayCommand<Models.UpdateSummary>(summary =>
-                                                    {
-                                                        var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions { ShowCloseButton = true, ShowMaximizeButton = true });
-                                                        window.Content = new SummaryView 
-                                                        { 
-                                                            DataContext = new SummaryViewModel 
-                                                            { 
-                                                                LastChanglogs = new Dictionary<string, List<AddonInstallerPackage>> { { latest.Manifest.Name, changelogs.ToList() } } 
-                                                            } 
-                                                        };
-                                                        window.Owner = Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.Name == "WindowMain");
-                                                        window.Width = 600;
-                                                        window.Height = 400;
-                                                        window.Title = ResourceProvider.GetString("LOC_AU_UpdateSummaryTitle");
-                                                        window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-                                                        window.PreviewKeyDown += (s, e) => { if (e.Key == Key.Escape) window.Close(); };
-                                                        window.Show();
-                                                    }),
-                                                    RemoveFromQueueCommand = new RelayCommand<string>(name =>
-                                                    {
-                                                        Settings.LastChanglogs.Remove(name);
-                                                        if (availableUpdatesViewModel.Value.Updates.FirstOrDefault(u => u.Name == name) is Models.UpdateSummary item)
-                                                        {
-                                                            var index = availableUpdatesViewModel.Value.Updates.IndexOf(item);
-                                                            availableUpdatesViewModel.Value.Updates.RemoveAt(index);
-                                                            updates.RemoveAt(index);
-                                                        }
-                                                    })
-                                                });
+                                                file.Write(data, 0, data.Length);
                                             }
-                                        }));
-
-                                        if (addToSummary)
-                                        {
-                                            Settings.LastChanglogs[latest.Manifest.Name] = latest.Manifest.InstallerManifest.Packages
-                                                .Where(p => p.Version > latest.InstalledVersion)
-                                                .Where(p => p.Version <= latest.Package.Version)
-                                                .OrderByDescending(p => p.Version)
-                                                .ToList();
-                                        } else
-                                        {
-                                            Settings.LastChanglogs.Remove(latest.Manifest.Name);
                                         }
+                                    }
+                                }
+                                if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+                                {
+                                    latest.FilePath = filePath;
+
+                                    updates.Add(new ExtensionInstallQueueItem(filePath, ExtInstallType.Install) { Info = latest });
+
+                                    bool addToSummary = false;
+
+                                    AutoUpdateSettings.VersionField versionField = GetUpdateKind(latest.InstalledVersion, latest.Package.Version);
+
+                                    addToSummary |= versionField == AutoUpdateSettings.VersionField.Build && Settings.ShowSummaryBuild;
+                                    addToSummary |= versionField == AutoUpdateSettings.VersionField.Minor && Settings.ShowSummaryMinor;
+                                    addToSummary |= versionField == AutoUpdateSettings.VersionField.Major && Settings.ShowSummaryMajor;
+
+                                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                                    {
+                                        if (availableUpdatesViewModel.IsValueCreated)
+                                        {
+                                            var queued = availableUpdatesViewModel.Value.Updates;
+                                            var changelogs = latest.Manifest.InstallerManifest.Packages
+                                                    .Where(p => p.Version > latest.InstalledVersion)
+                                                    .Where(p => p.Version <= latest.Package.Version)
+                                                    .OrderByDescending(p => p.Version);
+                                            queued.Add(new Models.UpdateSummary
+                                            {
+                                                Name = latest.Manifest.Name,
+                                                CurrentVersion = latest.InstalledVersion.ToString(),
+                                                NewVersion = latest.Package.Version.ToString(),
+                                                NewPackages = changelogs.ToObservable(),
+                                                ShowChangelogCommand = new RelayCommand<Models.UpdateSummary>(summary =>
+                                                {
+                                                    var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions { ShowCloseButton = true, ShowMaximizeButton = true });
+                                                    window.Content = new SummaryView
+                                                    {
+                                                        DataContext = new SummaryViewModel
+                                                        {
+                                                            LastChanglogs = new Dictionary<string, List<AddonInstallerPackage>> { { latest.Manifest.Name, changelogs.ToList() } }
+                                                        }
+                                                    };
+                                                    window.Owner = Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.Name == "WindowMain");
+                                                    window.Width = 600;
+                                                    window.Height = 400;
+                                                    window.Title = ResourceProvider.GetString("LOC_AU_UpdateSummaryTitle");
+                                                    window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                                                    window.PreviewKeyDown += (s, e) => { if (e.Key == Key.Escape) window.Close(); };
+                                                    window.Show();
+                                                }),
+                                                RemoveFromQueueCommand = new RelayCommand<string>(name =>
+                                                {
+                                                    Settings.LastChanglogs.Remove(name);
+                                                    if (availableUpdatesViewModel.Value.Updates.FirstOrDefault(u => u.Name == name) is Models.UpdateSummary item)
+                                                    {
+                                                        var index = availableUpdatesViewModel.Value.Updates.IndexOf(item);
+                                                        availableUpdatesViewModel.Value.Updates.RemoveAt(index);
+                                                        updates.RemoveAt(index);
+                                                    }
+                                                })
+                                            });
+                                        }
+                                    }));
+
+                                    if (addToSummary)
+                                    {
+                                        Settings.LastChanglogs[latest.Manifest.Name] = latest.Manifest.InstallerManifest.Packages
+                                            .Where(p => p.Version > latest.InstalledVersion)
+                                            .Where(p => p.Version <= latest.Package.Version)
+                                            .OrderByDescending(p => p.Version)
+                                            .ToList();
+                                    }
+                                    else
+                                    {
+                                        Settings.LastChanglogs.Remove(latest.Manifest.Name);
                                     }
                                 }
                             }
