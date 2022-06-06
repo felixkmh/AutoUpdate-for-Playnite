@@ -21,16 +21,20 @@ using AutoUpdate.ViewModels;
 using AutoUpdate.Views;
 using System.Windows;
 using System.Windows.Input;
+using StartPage.SDK;
 
 namespace AutoUpdate
 {
-    public class AutoUpdate : GenericPlugin
+    public class AutoUpdate : GenericPlugin, IStartPageExtension
     {
+        private const string AvailableUpdatesId = "AvailableUpdates";
         internal static readonly ILogger logger = LogManager.GetLogger();
         public static AutoUpdate Instance { get; private set; }
 
         private AutoUpdateSettingsViewModel settings { get; set; }
         private AutoUpdateSettings Settings => settings.Settings;
+
+        private string DownloadDirectory => Path.Combine(GetPluginUserDataPath(), "Downloads");
 
         private List<ExtensionInstallQueueItem> updates = new List<ExtensionInstallQueueItem>();
 
@@ -46,6 +50,10 @@ namespace AutoUpdate
                 HasSettings = true
             };
             Instance = this;
+            availableUpdatesViewModel = new Lazy<AvailableUpdatesViewModel>(() =>
+            {
+                return new AvailableUpdatesViewModel();
+            });
         }
 
         internal string ExtensionQueueFilePath => Path.Combine(PlayniteApi.Paths.ConfigurationPath, "extinstalls.json");
@@ -78,6 +86,11 @@ namespace AutoUpdate
 
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
         {
+            if (!Directory.Exists(DownloadDirectory))
+            {
+                Directory.CreateDirectory(DownloadDirectory);
+            }
+
             // Add code to be executed when Playnite is initialized.
             PlayniteApi.Notifications.Messages.CollectionChanged += Messages_CollectionChanged;
 
@@ -107,6 +120,18 @@ namespace AutoUpdate
                 Settings.AutoUpdateBuild)
             {
                 QueueUpdateInstallation(null);
+            }
+
+            try
+            {
+                foreach (var file in Directory.GetFiles(DownloadDirectory, "*", SearchOption.AllDirectories))
+                {
+                    File.Delete(file);
+                }
+            }
+            catch (Exception)
+            {
+                logger.Warn($"Failed to delete temp files in \"{DownloadDirectory}\".");
             }
         }
 
@@ -155,6 +180,14 @@ namespace AutoUpdate
         {
             backgroundTask = backgroundTask.ContinueWith(t =>
             {
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (availableUpdatesViewModel.IsValueCreated)
+                    {
+                        availableUpdatesViewModel.Value.Updates.Clear();
+                    }
+                }));
+
                 var queuedUpdates = new List<UpdateInfo>();
                 updates.Clear();
                 bool showNotification = false;
@@ -318,7 +351,7 @@ namespace AutoUpdate
                         {
                             try
                             {
-                                var tempPath = Path.Combine(Path.GetTempPath(), "Playnite");
+                                var tempPath = DownloadDirectory;
                                 var data = client.DownloadData(latest.Package.PackageUrl);
                                 var header = client.ResponseHeaders["Content-Disposition"];
                                 if (!string.IsNullOrEmpty(header))
@@ -345,6 +378,53 @@ namespace AutoUpdate
                                         addToSummary |= versionField == AutoUpdateSettings.VersionField.Build && Settings.ShowSummaryBuild;
                                         addToSummary |= versionField == AutoUpdateSettings.VersionField.Minor && Settings.ShowSummaryMinor;
                                         addToSummary |= versionField == AutoUpdateSettings.VersionField.Major && Settings.ShowSummaryMajor;
+
+                                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                                        {
+                                            if (availableUpdatesViewModel.IsValueCreated)
+                                            {
+                                                var queued = availableUpdatesViewModel.Value.Updates;
+                                                var changelogs = latest.Manifest.InstallerManifest.Packages
+                                                        .Where(p => p.Version > latest.InstalledVersion)
+                                                        .Where(p => p.Version <= latest.Package.Version)
+                                                        .OrderByDescending(p => p.Version);
+                                                queued.Add(new Models.UpdateSummary
+                                                {
+                                                    Name = latest.Manifest.Name,
+                                                    CurrentVersion = latest.InstalledVersion.ToString(),
+                                                    NewVersion = latest.Package.Version.ToString(),
+                                                    NewPackages = changelogs.ToObservable(),
+                                                    ShowChangelogCommand = new RelayCommand<Models.UpdateSummary>(summary =>
+                                                    {
+                                                        var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions { ShowCloseButton = true, ShowMaximizeButton = true });
+                                                        window.Content = new SummaryView 
+                                                        { 
+                                                            DataContext = new SummaryViewModel 
+                                                            { 
+                                                                LastChanglogs = new Dictionary<string, List<AddonInstallerPackage>> { { latest.Manifest.Name, changelogs.ToList() } } 
+                                                            } 
+                                                        };
+                                                        window.Owner = Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w.Name == "WindowMain");
+                                                        window.Width = 600;
+                                                        window.Height = 400;
+                                                        window.Title = ResourceProvider.GetString("LOC_AU_UpdateSummaryTitle");
+                                                        window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                                                        window.PreviewKeyDown += (s, e) => { if (e.Key == Key.Escape) window.Close(); };
+                                                        window.Show();
+                                                    }),
+                                                    RemoveFromQueueCommand = new RelayCommand<string>(name =>
+                                                    {
+                                                        Settings.LastChanglogs.Remove(name);
+                                                        if (availableUpdatesViewModel.Value.Updates.FirstOrDefault(u => u.Name == name) is Models.UpdateSummary item)
+                                                        {
+                                                            var index = availableUpdatesViewModel.Value.Updates.IndexOf(item);
+                                                            availableUpdatesViewModel.Value.Updates.RemoveAt(index);
+                                                            updates.RemoveAt(index);
+                                                        }
+                                                    })
+                                                });
+                                            }
+                                        }));
 
                                         if (addToSummary)
                                         {
@@ -438,6 +518,40 @@ namespace AutoUpdate
         public override UserControl GetSettingsView(bool firstRunSettings)
         {
             return new AutoUpdateSettingsView();
+        }
+
+        public StartPageExtensionArgs GetAvailableStartPageViews()
+        {
+            return new StartPageExtensionArgs
+            {
+                ExtensionName = "AutoUpdate",
+                Views = new List<StartPageViewArgsBase>
+                {
+                    new StartPageViewArgsBase() { Name = "Available Updates", ViewId = AvailableUpdatesId }
+                }
+            };
+        }
+
+        private Lazy<AvailableUpdatesViewModel> availableUpdatesViewModel;
+
+        public object GetStartPageView(string viewId, Guid instanceId)
+        {
+            if (viewId == AvailableUpdatesId)
+            {
+                var viewModel = availableUpdatesViewModel.Value;
+                return new Views.AvailableUpdatesView(viewModel);
+            }
+            return null;
+        }
+
+        public Control GetStartPageViewSettings(string viewId, Guid instanceId)
+        {
+            return null;
+        }
+
+        public void OnViewRemoved(string viewId, Guid instanceId)
+        {
+            
         }
     }
 }
