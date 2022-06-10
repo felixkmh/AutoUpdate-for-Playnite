@@ -47,6 +47,9 @@ namespace AutoUpdate
         private bool showSummaryMajor = false;
         public bool ShowSummaryMajor { get => showSummaryMajor; set => SetValue(ref showSummaryMajor, value); }
 
+        private bool restartOnLock = false;
+        public bool RestartOnLock { get => restartOnLock; set => SetValue(ref restartOnLock, value); }
+
         private Dictionary<string, List<AddonInstallerPackage>> lastChanglogs = new Dictionary<string, List<AddonInstallerPackage>>();
         public Dictionary<string, List<AddonInstallerPackage>> LastChanglogs { get => lastChanglogs; set => SetValue(ref lastChanglogs, value); }
     }

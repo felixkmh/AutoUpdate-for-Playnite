@@ -8,6 +8,10 @@
              d:DesignHeight="400" d:DesignWidth="600"
              d:DataContext="{d:DesignInstance IsDesignTimeCreatable=False, Type=au:AutoUpdateSettingsViewModel}">
     <StackPanel Margin="12">
+        <CheckBox Content="{DynamicResource LOC_AU_RestartOnLock}" 
+                  ToolTip="{DynamicResource LOC_AU_RestartOnLockTooltip}"
+                  IsChecked="{Binding Settings.RestartOnLock}"
+                  Margin="3"/>
         <GroupBox HorizontalAlignment="Left">
             <GroupBox.Header>
                 <TextBlock Text="{DynamicResource LOC_AU_SuppressNotification}" TextWrapping="Wrap"/>

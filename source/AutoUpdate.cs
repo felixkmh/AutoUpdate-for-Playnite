@@ -22,6 +22,8 @@ using AutoUpdate.Views;
 using System.Windows;
 using System.Windows.Input;
 using StartPage.SDK;
+using System.Diagnostics;
+using Microsoft.Win32;
 
 namespace AutoUpdate
 {
@@ -77,6 +79,7 @@ namespace AutoUpdate
         public override void OnGameStopped(OnGameStoppedEventArgs args)
         {
             // Add code to be executed when game is preparing to be started.
+            SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
         }
 
         public override void OnGameUninstalled(OnGameUninstalledEventArgs args)
@@ -84,8 +87,48 @@ namespace AutoUpdate
             // Add code to be executed when game is uninstalled.
         }
 
+        public override IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
+        {
+            yield return new MainMenuItem
+            {
+                Description = "Restart",
+                Action = e =>
+                {
+                    RestartPlaynite();
+                }
+            };
+        }
+
+        private void RestartPlaynite()
+        {
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                string executable = null;
+                switch (PlayniteApi.ApplicationInfo.Mode)
+                {
+                    case ApplicationMode.Desktop:
+                        executable = "Playnite.DesktopApp.exe";
+                        break;
+                    case ApplicationMode.Fullscreen:
+                        executable = "Playnite.FullscreenApp.exe";
+                        break;
+                }
+                var applicationPath = Path.Combine(PlayniteApi.Paths.ApplicationPath, executable);
+                try
+                {
+                    Process.Start(applicationPath, "--nolibupdate --masterinstance --hidesplashscreen");
+                }
+                catch (Exception e)
+                {
+                    logger.Error(e, "Couldn't restart Playnite.");
+                }
+                Application.Current.Shutdown(0);
+            }), DispatcherPriority.ApplicationIdle);
+        }
+
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
         {
+            SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
             if (!Directory.Exists(DownloadDirectory))
             {
                 Directory.CreateDirectory(DownloadDirectory);
@@ -132,6 +175,19 @@ namespace AutoUpdate
             catch (Exception)
             {
                 logger.Warn($"Failed to delete temp files in \"{DownloadDirectory}\".");
+            }
+        }
+
+        private void SystemEvents_SessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            if (e.Reason == SessionSwitchReason.SessionLock)
+            {
+                if (updates.Any() &&
+                    Settings.RestartOnLock &&
+                    !PlayniteApi.Database.Games.Any(g => g.IsRunning))
+                {
+                    RestartPlaynite();
+                }
             }
         }
 
