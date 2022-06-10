@@ -89,14 +89,15 @@ namespace AutoUpdate
 
         public override IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
         {
-            yield return new MainMenuItem
-            {
-                Description = "Restart",
-                Action = e =>
-                {
-                    RestartPlaynite();
-                }
-            };
+            //yield return new MainMenuItem
+            //{
+            //    Description = "Restart",
+            //    Action = e =>
+            //    {
+            //        RestartPlaynite();
+            //    }
+            //};
+            return base.GetMainMenuItems(args);
         }
 
         private void RestartPlaynite()
