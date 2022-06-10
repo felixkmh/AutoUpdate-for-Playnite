@@ -14,4 +14,6 @@ Z.B. von 1.2.1 auf 1.2.2, aber nicht von 1.2.1 auf 1.3.0.</sys:String>
     <sys:String x:Key="LOC_AU_ShowSummary">Update-Zusammenfassung beim Start anzeigen</sys:String>
     <sys:String x:Key="LOC_AU_UpdateSummaryTitle">Zusammenfassung der automatischen Aktualisierung</sys:String>
     <sys:String x:Key="LOC_AU_QueuedUpdatesLabel">Eingereihte Updates:</sys:String>
+    <sys:String x:Key="LOC_AU_RestartOnLock">Restart Playnite when Windows is locked</sys:String>
+    <sys:String x:Key="LOC_AU_RestartOnLockTooltip">If updates are scheduled for installation, restart Playnite when Windows is locked and no games are running.</sys:String>
 </ResourceDictionary>
