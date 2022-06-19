@@ -69,11 +69,16 @@
     <Compile Include="AutoUpdateSettingsView.xaml.cs">
       <DependentUpon>AutoUpdateSettingsView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\BooleanConjunctionConverter.cs" />
+    <Compile Include="Converters\BooleanDisjunctionConverter.cs" />
     <Compile Include="ExtensionInstallQueueItem.cs" />
     <Compile Include="Models\UpdateSummary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModels\AvailableUpdatesViewModel.cs" />
     <Compile Include="ViewModels\SummaryViewModel.cs" />
+    <Compile Include="Views\AvailableUpdatesSettingsView.xaml.cs">
+      <DependentUpon>AvailableUpdatesSettingsView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\AvailableUpdatesView.xaml.cs">
       <DependentUpon>AvailableUpdatesView.xaml</DependentUpon>
     </Compile>
@@ -97,6 +102,10 @@
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Page Include="Views\AvailableUpdatesSettingsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\AvailableUpdatesView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -33,8 +33,10 @@ namespace AutoUpdate
         internal static readonly ILogger logger = LogManager.GetLogger();
         public static AutoUpdate Instance { get; private set; }
 
-        private AutoUpdateSettingsViewModel settings { get; set; }
+        internal AutoUpdateSettingsViewModel settings { get; set; }
         private AutoUpdateSettings Settings => settings.Settings;
+
+        public bool IsChecking { get; private set; } = false;
 
         private string DownloadDirectory => Path.Combine(GetPluginUserDataPath(), "Downloads");
 
@@ -54,7 +56,7 @@ namespace AutoUpdate
             Instance = this;
             availableUpdatesViewModel = new Lazy<AvailableUpdatesViewModel>(() =>
             {
-                return new AvailableUpdatesViewModel();
+                return new AvailableUpdatesViewModel(this);
             });
         }
 
@@ -234,10 +236,11 @@ namespace AutoUpdate
             public string FilePath { get; set; } = null;
         }
 
-        private void QueueUpdateInstallation(NotificationMessage updateNotification)
+        internal Task QueueUpdateInstallation(NotificationMessage updateNotification)
         {
             backgroundTask = backgroundTask.ContinueWith(t =>
             {
+                IsChecking = true;
                 Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     if (availableUpdatesViewModel.IsValueCreated)
@@ -530,7 +533,9 @@ namespace AutoUpdate
                 }
                 GC.Collect();
                 t?.Dispose();
+                IsChecking = false;
             });
+            return backgroundTask;
         }
 
         private static AutoUpdateSettings.VersionField GetUpdateKind(System.Version installedVersion, System.Version latest)
@@ -608,7 +613,7 @@ namespace AutoUpdate
                 ExtensionName = "AutoUpdate",
                 Views = new List<StartPageViewArgsBase>
                 {
-                    new StartPageViewArgsBase() { Name = "Available Updates", ViewId = AvailableUpdatesId }
+                    new StartPageViewArgsBase() { Name = "Available Updates", ViewId = AvailableUpdatesId, HasSettings = true }
                 }
             };
         }
@@ -627,6 +632,10 @@ namespace AutoUpdate
 
         public Control GetStartPageViewSettings(string viewId, Guid instanceId)
         {
+            if (viewId == AvailableUpdatesId)
+            {
+                return new AvailableUpdatesSettingsView() { DataContext = settings };
+            }
             return null;
         }
 

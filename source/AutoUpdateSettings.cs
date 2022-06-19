@@ -50,6 +50,9 @@ namespace AutoUpdate
         private bool restartOnLock = false;
         public bool RestartOnLock { get => restartOnLock; set => SetValue(ref restartOnLock, value); }
 
+        private bool hideUpdateButton = false;
+        public bool HideUpdateButton { get => hideUpdateButton; set => SetValue(ref hideUpdateButton, value); }
+
         private Dictionary<string, List<AddonInstallerPackage>> lastChanglogs = new Dictionary<string, List<AddonInstallerPackage>>();
         public Dictionary<string, List<AddonInstallerPackage>> LastChanglogs { get => lastChanglogs; set => SetValue(ref lastChanglogs, value); }
     }

@@ -5,59 +5,78 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:AutoUpdate.Views"
              xmlns:vm="clr-namespace:AutoUpdate.ViewModels"
+             xmlns:conv="clr-namespace:AutoUpdate.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance IsDesignTimeCreatable=False, Type=vm:AvailableUpdatesViewModel}">
-    <DockPanel>
-        <DockPanel.Style>
-            <Style TargetType="DockPanel">
-                <Setter Property="Visibility" Value="Visible"/>
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding Updates.Count}" Value="0">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-        </DockPanel.Style>
-        <TextBlock Text="{DynamicResource LOC_AU_QueuedUpdatesLabel}" DockPanel.Dock="Top" Margin="0,0,0,5"
-                   FontSize="{DynamicResource FontSizeLarge}"
-                   FontWeight="Bold"/>
-        <ScrollViewer>
-            <ItemsControl ItemsSource="{Binding Updates}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Background="Transparent"
-                                    x:Name="EntryStackPanel"
-                                    HorizontalAlignment="Left">
-                            <Button Content="X" VerticalAlignment="Center" Padding="3,1" Margin="0,0,2,0"
-                                    Visibility="{Binding ElementName=EntryStackPanel, Path=IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                    Command="{Binding RemoveFromQueueCommand}" CommandParameter="{Binding Name}"/>
-                            <Button Command="{Binding ShowChangelogCommand}" CommandParameter="{Binding .}"
-                                    Margin="2,0,0,0">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="HorizontalAlignment" Value="Left"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <TextBlock Foreground="{DynamicResource TextBrush}" Margin="3" Background="Transparent">
-                                                        <Run Text="{Binding Name}" FontWeight="SemiBold"/>
-                                                        <Run Text=": "/>
-                                                        <Run Text="{Binding CurrentVersion}" Foreground="LightSalmon"/>
-                                                        <Run Text="  " FontFamily="{DynamicResource FontIcoFont}"/>
-                                                        <Run Text="{Binding NewVersion}" Foreground="LightGreen"/>
-                                                    </TextBlock>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-    </DockPanel>
+    <UserControl.Resources>
+        <conv:BooleanConjunctionConverter x:Key="BooleanConjunctionConverter"/>
+        <conv:BooleanDisjunctionConverter x:Key="BooleanDisjunctionConverter"/>
+    </UserControl.Resources>
+    <Grid>
+        <Button Content="{DynamicResource LOCCheckForUpdates}" 
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Command="{Binding CheckForUpdatesCommand}">
+            <Button.Visibility>
+                <MultiBinding ConverterParameter="Inverted" Converter="{StaticResource BooleanDisjunctionConverter}">
+                    <Binding ElementName="UpdatesDockPanel" Path="IsVisible"/>
+                    <Binding Path="IsChecking"/>
+                    <Binding Path="SettingsViewModel.Settings.HideUpdateButton"/>
+                </MultiBinding>
+            </Button.Visibility>
+        </Button>
+        <DockPanel x:Name="UpdatesDockPanel">
+            <DockPanel.Style>
+                <Style TargetType="DockPanel">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Updates.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DockPanel.Style>
+            <TextBlock Text="{DynamicResource LOC_AU_QueuedUpdatesLabel}" DockPanel.Dock="Top" Margin="0,0,0,5"
+                       FontSize="{DynamicResource FontSizeLarge}"
+                       FontWeight="Bold"/>
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding Updates}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Background="Transparent"
+                                        x:Name="EntryStackPanel"
+                                        HorizontalAlignment="Left">
+                                <Button Content="X" VerticalAlignment="Center" Padding="3,1" Margin="0,0,2,0"
+                                        Visibility="{Binding ElementName=EntryStackPanel, Path=IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                        Command="{Binding RemoveFromQueueCommand}" CommandParameter="{Binding Name}"/>
+                                <Button Command="{Binding ShowChangelogCommand}" CommandParameter="{Binding .}"
+                                        Margin="2,0,0,0">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Cursor" Value="Hand"/>
+                                            <Setter Property="HorizontalAlignment" Value="Left"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <TextBlock Foreground="{DynamicResource TextBrush}" Margin="3" Background="Transparent">
+                                                            <Run Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                            <Run Text=": "/>
+                                                            <Run Text="{Binding CurrentVersion}" Foreground="LightSalmon"/>
+                                                            <Run Text="  " FontFamily="{DynamicResource FontIcoFont}"/>
+                                                            <Run Text="{Binding NewVersion}" Foreground="LightGreen"/>
+                                                        </TextBlock>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
+    </Grid>
 </UserControl>
