@@ -16,5 +16,5 @@ Z.B. von 1.2.1 auf 1.2.2, aber nicht von 1.2.1 auf 1.3.0.</sys:String>
     <sys:String x:Key="LOC_AU_QueuedUpdatesLabel">Eingereihte Updates:</sys:String>
     <sys:String x:Key="LOC_AU_RestartOnLock">Playnite neustarten, wenn Windows gesperrt wird</sys:String>
     <sys:String x:Key="LOC_AU_RestartOnLockTooltip">Wenn Updates zur Installation geplant sind, startet Playnite neu, sobald Windows gesperrt wird und keine Spiele laufen.</sys:String>
-    <sys:String x:Key="LOC_AU_HideUpdateButton">Hide Update button</sys:String>
+    <sys:String x:Key="LOC_AU_HideUpdateButton">Update-Button ausblenden</sys:String>
 </ResourceDictionary>
