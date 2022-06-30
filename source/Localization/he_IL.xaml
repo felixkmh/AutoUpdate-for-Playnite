@@ -1,20 +1,20 @@
 ﻿<?xml version="1.0"?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib">
-	<sys:String x:Key="LOC_AU_SuppressNotification">Suppress update notification</sys:String>
-    <sys:String x:Key="LOC_AU_AutoUpdate">Automatically download updates and queue installation for next restart</sys:String>
-	<sys:String x:Key="LOC_AU_Major">Major</sys:String>
-	<sys:String x:Key="LOC_AU_Minor">Minor</sys:String>
-	<sys:String x:Key="LOC_AU_Build">Build</sys:String>
-    <sys:String x:Key="LOC_AU_MajorTooltip" xml:space="preserve">The major version of the update is higher than the major version of the installed extension.
-E.g. from 1.2.1 to 2.0.1, but not from 1.2.1 to 1.3.0.</sys:String>
-    <sys:String x:Key="LOC_AU_MinorTooltip" xml:space="preserve">The minor version of the update is higher than the minor version of the installed extension.
-E.g. from 1.2.1 to 1.3.2, but not from 1.2.1 to 2.3.0.</sys:String>
-    <sys:String x:Key="LOC_AU_BuildTooltip" xml:space="preserve">The build version of the update is higher than the build version of the installed extension.
-E.g. from 1.2.1 to 1.2.2, but not from 1.2.1 to 1.3.0.</sys:String>
-    <sys:String x:Key="LOC_AU_ShowSummary">Show update summary on launch</sys:String>
-    <sys:String x:Key="LOC_AU_UpdateSummaryTitle">Auto Update Summary</sys:String>
-    <sys:String x:Key="LOC_AU_QueuedUpdatesLabel">Queued Updates:</sys:String>
-    <sys:String x:Key="LOC_AU_RestartOnLock">Restart Playnite when Windows is locked</sys:String>
-    <sys:String x:Key="LOC_AU_RestartOnLockTooltip">If updates are scheduled for installation, restart Playnite when Windows is locked and no games are running.</sys:String>
-    <sys:String x:Key="LOC_AU_HideUpdateButton">Hide Update button</sys:String>
+	<sys:String x:Key="LOC_AU_SuppressNotification">השתק התראות עדכון</sys:String>
+    <sys:String x:Key="LOC_AU_AutoUpdate">הורד אוטומטית עדכונים ושים בתור הורדות עדכונים להפעלה מחדש הבאה</sys:String>
+	<sys:String x:Key="LOC_AU_Major">גדול</sys:String>
+	<sys:String x:Key="LOC_AU_Minor">קטן</sys:String>
+	<sys:String x:Key="LOC_AU_Build">בניה</sys:String>
+    <sys:String x:Key="LOC_AU_MajorTooltip" xml:space="preserve">הגרסה הראשית של העדכון גבוהה יותר מהגרסה הראשית של התוסף המותקן.
+למשל מ-1.2.1 עד 2.0.1, אך לא מ-1.2.1 עד 1.3.0.</sys:String>
+    <sys:String x:Key="LOC_AU_MinorTooltip" xml:space="preserve">הגרסה המשנית של העדכון גבוהה יותר מהגרסה המשנית של התוסף המותקן.
+למשל. מ-1.2.1 עד 1.3.2, אך לא מ-1.2.1 עד 2.3.0.</sys:String>
+    <sys:String x:Key="LOC_AU_BuildTooltip" xml:space="preserve">גרסת ההתקנה של העדכון גבוהה יותר מגרסת ההתקנה של התוסף המותקן.
+לְמָשָׁל. מ-1.2.1 עד 1.2.2, אך לא מ-1.2.1 עד 1.3.0.</sys:String>
+    <sys:String x:Key="LOC_AU_ShowSummary">הצג סיכום עדכונים בעת ההפעלה</sys:String>
+    <sys:String x:Key="LOC_AU_UpdateSummaryTitle">סיכום העדכון האוטומטי</sys:String>
+    <sys:String x:Key="LOC_AU_QueuedUpdatesLabel">עדכונים בתור:</sys:String>
+    <sys:String x:Key="LOC_AU_RestartOnLock">עדכן את Playnite כאשר Windows נעול</sys:String>
+    <sys:String x:Key="LOC_AU_RestartOnLockTooltip">אם עדכונים מתוזמנים להתקנה, הפעל מחדש את Playnite כאשר Windows נעול ואין משחקים פועלים.</sys:String>
+    <sys:String x:Key="LOC_AU_HideUpdateButton">הסתר את כפתור העדכון</sys:String>
 </ResourceDictionary>
