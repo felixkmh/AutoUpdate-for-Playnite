@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0"?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib">
-	<sys:String x:Key="LOC_AU_SuppressNotification">Suppress update notification</sys:String>
-    <sys:String x:Key="LOC_AU_AutoUpdate">Automatically download updates and queue installation for next restart</sys:String>
-	<sys:String x:Key="LOC_AU_Major">Major</sys:String>
-	<sys:String x:Key="LOC_AU_Minor">Minor</sys:String>
-	<sys:String x:Key="LOC_AU_Build">Build</sys:String>
-    <sys:String x:Key="LOC_AU_MajorTooltip" xml:space="preserve">The major version of the update is higher than the major version of the installed extension.
-E.g. from 1.2.1 to 2.0.1, but not from 1.2.1 to 1.3.0.</sys:String>
+	<sys:String x:Key="LOC_AU_SuppressNotification">折叠更新通知</sys:String>
+    <sys:String x:Key="LOC_AU_AutoUpdate">自动下载更新，并为下次重开安排安装流程</sys:String>
+	<sys:String x:Key="LOC_AU_Major">大版本</sys:String>
+	<sys:String x:Key="LOC_AU_Minor">小版本</sys:String>
+	<sys:String x:Key="LOC_AU_Build">构建</sys:String>
+    <sys:String x:Key="LOC_AU_MajorTooltip" xml:space="preserve">要更新的大版本须高于已安装扩展的大版本。
+例如：从 1.2.1 到 2.0.1，而非从 1.2.1 到 1.3.0。</sys:String>
     <sys:String x:Key="LOC_AU_MinorTooltip" xml:space="preserve">The minor version of the update is higher than the minor version of the installed extension.
 E.g. from 1.2.1 to 1.3.2, but not from 1.2.1 to 2.3.0.</sys:String>
     <sys:String x:Key="LOC_AU_BuildTooltip" xml:space="preserve">The build version of the update is higher than the build version of the installed extension.
